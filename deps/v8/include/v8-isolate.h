@@ -294,6 +294,12 @@ class V8_EXPORT Isolate {
      */
     FatalErrorCallback fatal_error_callback = nullptr;
     OOMErrorCallback oom_error_callback = nullptr;
+
+    /**
+     * A CppHeap used to construct the Isolate. V8 takes ownership of the
+     * CppHeap passed this way.
+     */
+    CppHeap* cpp_heap = nullptr;
   };
 
   /**
@@ -421,36 +427,36 @@ class V8_EXPORT Isolate {
   enum UseCounterFeature {
     kUseAsm = 0,
     kBreakIterator = 1,
-    kLegacyConst V8_DEPRECATE_SOON("unused") = 2,
-    kMarkDequeOverflow V8_DEPRECATE_SOON("unused") = 3,
-    kStoreBufferOverflow V8_DEPRECATE_SOON("unused") = 4,
-    kSlotsBufferOverflow V8_DEPRECATE_SOON("unused") = 5,
-    kObjectObserve V8_DEPRECATE_SOON("unused") = 6,
+    kOBSOLETE_LegacyConst = 2,
+    kOBSOLETE_MarkDequeOverflow = 3,
+    kOBSOLETE_StoreBufferOverflow = 4,
+    kOBSOLETE_SlotsBufferOverflow = 5,
+    kOBSOLETE_ObjectObserve = 6,
     kForcedGC = 7,
     kSloppyMode = 8,
     kStrictMode = 9,
-    kStrongMode V8_DEPRECATE_SOON("unused") = 10,
+    kOBSOLETE_StrongMode = 10,
     kRegExpPrototypeStickyGetter = 11,
     kRegExpPrototypeToString = 12,
     kRegExpPrototypeUnicodeGetter = 13,
-    kIntlV8Parse V8_DEPRECATE_SOON("unused") = 14,
-    kIntlPattern V8_DEPRECATE_SOON("unused") = 15,
-    kIntlResolved V8_DEPRECATE_SOON("unused") = 16,
-    kPromiseChain V8_DEPRECATE_SOON("unused") = 17,
-    kPromiseAccept V8_DEPRECATE_SOON("unused") = 18,
-    kPromiseDefer V8_DEPRECATE_SOON("unused") = 19,
+    kOBSOLETE_IntlV8Parse = 14,
+    kOBSOLETE_IntlPattern = 15,
+    kOBSOLETE_IntlResolved = 16,
+    kOBSOLETE_PromiseChain = 17,
+    kOBSOLETE_PromiseAccept = 18,
+    kOBSOLETE_PromiseDefer = 19,
     kHtmlCommentInExternalScript = 20,
     kHtmlComment = 21,
     kSloppyModeBlockScopedFunctionRedefinition = 22,
     kForInInitializer = 23,
-    kArrayProtectorDirtied V8_DEPRECATE_SOON("unused") = 24,
+    kOBSOLETE_ArrayProtectorDirtied = 24,
     kArraySpeciesModified = 25,
     kArrayPrototypeConstructorModified = 26,
-    kArrayInstanceProtoModified V8_DEPRECATE_SOON("unused") = 27,
+    kOBSOLETE_ArrayInstanceProtoModified = 27,
     kArrayInstanceConstructorModified = 28,
-    kLegacyFunctionDeclaration V8_DEPRECATE_SOON("unused") = 29,
-    kRegExpPrototypeSourceGetter V8_DEPRECATE_SOON("unused") = 30,
-    kRegExpPrototypeOldFlagGetter V8_DEPRECATE_SOON("unused") = 31,
+    kOBSOLETE_LegacyFunctionDeclaration = 29,
+    kOBSOLETE_RegExpPrototypeSourceGetter = 30,
+    kOBSOLETE_RegExpPrototypeOldFlagGetter = 31,
     kDecimalWithLeadingZeroInStrictMode = 32,
     kLegacyDateParser = 33,
     kDefineGetterOrSetterWouldThrow = 34,
@@ -458,22 +464,21 @@ class V8_EXPORT Isolate {
     kAssigmentExpressionLHSIsCallInSloppy = 36,
     kAssigmentExpressionLHSIsCallInStrict = 37,
     kPromiseConstructorReturnedUndefined = 38,
-    kConstructorNonUndefinedPrimitiveReturn V8_DEPRECATE_SOON("unused") = 39,
-    kLabeledExpressionStatement V8_DEPRECATE_SOON("unused") = 40,
-    kLineOrParagraphSeparatorAsLineTerminator V8_DEPRECATE_SOON("unused") = 41,
+    kOBSOLETE_ConstructorNonUndefinedPrimitiveReturn = 39,
+    kOBSOLETE_LabeledExpressionStatement = 40,
+    kOBSOLETE_LineOrParagraphSeparatorAsLineTerminator = 41,
     kIndexAccessor = 42,
     kErrorCaptureStackTrace = 43,
     kErrorPrepareStackTrace = 44,
     kErrorStackTraceLimit = 45,
     kWebAssemblyInstantiation = 46,
     kDeoptimizerDisableSpeculation = 47,
-    kArrayPrototypeSortJSArrayModifiedPrototype V8_DEPRECATE_SOON("unused") =
-        48,
+    kOBSOLETE_ArrayPrototypeSortJSArrayModifiedPrototype = 48,
     kFunctionTokenOffsetTooLongForToString = 49,
     kWasmSharedMemory = 50,
     kWasmThreadOpcodes = 51,
-    kAtomicsNotify V8_DEPRECATE_SOON("unused") = 52,
-    kAtomicsWake V8_DEPRECATE_SOON("unused") = 53,
+    kOBSOLETE_AtomicsNotify = 52,
+    kOBSOLETE_AtomicsWake = 53,
     kCollator = 54,
     kNumberFormat = 55,
     kDateTimeFormat = 56,
@@ -483,7 +488,7 @@ class V8_EXPORT Isolate {
     kListFormat = 60,
     kSegmenter = 61,
     kStringLocaleCompare = 62,
-    kStringToLocaleUpperCase V8_DEPRECATE_SOON("unused") = 63,
+    kOBSOLETE_StringToLocaleUpperCase = 63,
     kStringToLocaleLowerCase = 64,
     kNumberToLocaleString = 65,
     kDateToLocaleString = 66,
@@ -491,14 +496,14 @@ class V8_EXPORT Isolate {
     kDateToLocaleTimeString = 68,
     kAttemptOverrideReadOnlyOnPrototypeSloppy = 69,
     kAttemptOverrideReadOnlyOnPrototypeStrict = 70,
-    kOptimizedFunctionWithOneShotBytecode V8_DEPRECATE_SOON("unused") = 71,
+    kOBSOLETE_OptimizedFunctionWithOneShotBytecode = 71,
     kRegExpMatchIsTrueishOnNonJSRegExp = 72,
     kRegExpMatchIsFalseishOnJSRegExp = 73,
-    kDateGetTimezoneOffset V8_DEPRECATE_SOON("unused") = 74,
+    kOBSOLETE_DateGetTimezoneOffset = 74,
     kStringNormalize = 75,
     kCallSiteAPIGetFunctionSloppyCall = 76,
     kCallSiteAPIGetThisSloppyCall = 77,
-    kRegExpMatchAllWithNonGlobalRegExp V8_DEPRECATE_SOON("unused") = 78,
+    kOBSOLETE_RegExpMatchAllWithNonGlobalRegExp = 78,
     kRegExpExecCalledOnSlowRegExp = 79,
     kRegExpReplaceCalledOnSlowRegExp = 80,
     kDisplayNames = 81,
@@ -529,10 +534,8 @@ class V8_EXPORT Isolate {
     kWasmSimdOpcodes = 106,
     kVarRedeclaredCatchBinding = 107,
     kWasmRefTypes = 108,
-    kWasmBulkMemory V8_DEPRECATE_SOON(
-        "Unused since 2021 (https://crrev.com/c/2622913)") = 109,
-    kWasmMultiValue V8_DEPRECATE_SOON(
-        "Unused since 2021 (https://crrev.com/c/2817790)") = 110,
+    kOBSOLETE_WasmBulkMemory = 109,
+    kOBSOLETE_WasmMultiValue = 110,
     kWasmExceptionHandling = 111,
     kInvalidatedMegaDOMProtector = 112,
     kFunctionPrototypeArguments = 113,
@@ -541,8 +544,7 @@ class V8_EXPORT Isolate {
     kAsyncStackTaggingCreateTaskCall = 116,
     kDurationFormat = 117,
     kInvalidatedNumberStringNotRegexpLikeProtector = 118,
-    kRegExpUnicodeSetIncompatibilitiesWithUnicodeMode V8_DEPRECATE_SOON(
-        "unused") = 119,
+    kOBSOLETE_RegExpUnicodeSetIncompatibilitiesWithUnicodeMode = 119,
     kImportAssertionDeprecatedSyntax = 120,
     kLocaleInfoObsoletedGetters = 121,
     kLocaleInfoFunctions = 122,
@@ -551,6 +553,11 @@ class V8_EXPORT Isolate {
     kWasmMemory64 = 125,
     kWasmMultiMemory = 126,
     kWasmGC = 127,
+    kWasmImportedStrings = 128,
+    kSourceMappingUrlMagicCommentAtSign = 129,
+    kTemporalObject = 130,
+    kWasmModuleCompilation = 131,
+    kInvalidatedNoUndetectableObjectsProtector = 132,
 
     // If you add new values here, you'll also need to update Chromium's:
     // web_feature.mojom, use_counter_callback.cc, and enums.xml. V8 changes to
@@ -1009,12 +1016,20 @@ class V8_EXPORT Isolate {
    *
    * Multi-threaded use requires the use of v8::Locker/v8::Unlocker, see
    * CppHeap.
+   *
+   * If a CppHeap is set via CreateParams, then this call is a noop.
    */
+  V8_DEPRECATE_SOON(
+      "Set the heap on Isolate creation using CreateParams instead.")
   void AttachCppHeap(CppHeap*);
 
   /**
    * Detaches a managed C++ heap if one was attached using `AttachCppHeap()`.
+   *
+   * If a CppHeap is set via CreateParams, then this call is a noop.
    */
+  V8_DEPRECATE_SOON(
+      "Set the heap on Isolate creation using CreateParams instead.")
   void DetachCppHeap();
 
   /**

@@ -79,6 +79,9 @@
   'regress/regress-crbug-595657': [SKIP],
   'regress/regress-475705': [SKIP],
 
+  # BUG(chromium:1497251): Probably some data race in the interpreter.
+  'regress/regress-1497251': [SKIP],
+
   ##############################################################################
   # Tests where variants make no sense.
   'd8/enable-tracing': [PASS, NO_VARIANTS],
@@ -138,6 +141,8 @@
   'harmony/promise-any-overflow-2': [PASS, SLOW, ['arch != x64', SKIP]],
   'harmony/futex': [PASS, SLOW],
   'harmony/regexp-property-script-extensions': [PASS, SLOW],
+  'harmony/sharedarraybuffer-stress': [PASS, SLOW],
+  'harmony/sharedarraybuffer-worker-gc-stress': [PASS, SLOW],
   'large-object-literal-slow-elements': [PASS, SLOW],
   'math-floor-of-div': [PASS, SLOW],
   'md5': [PASS, SLOW],
@@ -191,25 +196,23 @@
   'cross-realm-filtering': [SKIP],
 
   # Tests that need to run sequentially (e.g. due to memory consumption).
-  'compiler/array-subclass': [PASS, HEAVY],
-  'compiler/regress-crbug-11564': [PASS, HEAVY],
   'd8/d8-worker-shutdown*': [PASS, HEAVY],
-  'es6/large-classes-*': [PASS, HEAVY],
-  'harmony/sharedarraybuffer-stress': [PASS, HEAVY],
-  'harmony/sharedarraybuffer-worker-gc-stress': [PASS, HEAVY],
-  'ignition/regress-672027': [PASS, HEAVY],
+  'huge-typedarrays': [PASS, HEAVY],
   'json2': [PASS, HEAVY],
-  'regress/regress-500980': [PASS, HEAVY],
-  'regress/regress-599414-array-concat-fast-path': [PASS, HEAVY],
   'regress/regress-678917': [PASS, HEAVY],
   'regress/regress-779407': [PASS, HEAVY],
   'regress/regress-852258': [PASS, HEAVY],
-  'regress/regress-862433': [PASS, HEAVY],
   'regress/regress-1034322': [PASS, HEAVY, NO_VARIANTS, ['mode != release', SKIP]],
-  'regress/regress-crbug-119926': [PASS, HEAVY],
-  'regress/regress-crbug-941743': [PASS, HEAVY],
-  'regress/regress-crbug-1191886': [PASS, HEAVY],
-  'wasm/externref-globals': [PASS, HEAVY],
+  'regress/regress-1320641': [PASS, HEAVY],
+  'regress/regress-1447343': [PASS, HEAVY],
+  'wasm/grow-huge-memory': [PASS, HEAVY],
+  'wasm/huge-memory': [PASS, HEAVY],
+  'wasm/many-modules': [PASS, HEAVY],
+  'wasm/memory64': [PASS, HEAVY],
+  'wasm/simd-lane-memory64': [PASS, HEAVY],
+  'wasm/stringrefs-regressions': [PASS, HEAVY],
+  'wasm/table': [PASS, HEAVY],
+  'wasm/table-grow': [PASS, HEAVY],
 
   # TODO(v8:10915): Fails with --future.
   'harmony/weakrefs/stress-finalizationregistry-dirty-enqueue': [SKIP],
@@ -295,6 +298,9 @@
   'wasm/atomics-stress': [SKIP],
   'wasm/atomics64-stress': [SKIP],
   'wasm/atomics-memory64': [SKIP],
+  # Profiler test is flaky on simulators.
+  'wasm/log-wasm-to-js-wrapper-callref': [SKIP],
+  'wasm/log-wasm-to-js-wrapper-indirect': [SKIP],
 }],  # simulator_run
 
 ##############################################################################
@@ -312,6 +318,7 @@
   'getters-on-elements': [SKIP],
   'es6/block-let-crankshaft': [SKIP],
   'maglev/osr-to-tf': [SKIP],
+  'maglev/unstable-map-transition': [SKIP],
   'opt-elements-kind': [SKIP],
   'osr-elements-kind': [SKIP],
   'compiler/number-divide': [SKIP],
@@ -581,6 +588,7 @@
 
   # Needs a huge Uint8Array.
   'regress/regress-1432470': [SKIP],
+  'wasm/imported-dataview-bytelength': [SKIP],
 
   # Needs 64-bit number register support
   'compiler/fast-api-calls-64-bit-integer-values': [SKIP],
@@ -650,6 +658,10 @@
 
   # BUG(v8:7247).
   'regress/regress-779407': [PASS, SLOW, NO_VARIANTS],
+
+  # BUG(v8:14215).
+  'tzoffset-seoul-noi18n': [PASS, FAIL],
+  'tzoffset-transition-new-york-noi18n': [PASS, FAIL],
 }],  # 'arch == arm64'
 
 ##############################################################################
@@ -1016,6 +1028,9 @@
   'tzoffset-transition-new-york-noi18n': [SKIP],
   'tzoffset-seoul': [SKIP],
   'tzoffset-seoul-noi18n': [SKIP],
+
+  # Suspect to stress other tests when run in background.
+  'huge-typedarrays': [PASS, HEAVY, NO_VARIANTS],
 }],  # 'system == windows'
 
 ##############################################################################
@@ -1249,6 +1264,8 @@
   'd8/d8-worker-shutdown-gc': [SKIP],
   'harmony/futex': [SKIP],
   'typedarray-growablesharedarraybuffer-atomics': [SKIP],
+  'wasm/log-wasm-to-js-wrapper-callref': [SKIP],
+  'wasm/log-wasm-to-js-wrapper-indirect': [SKIP],
 
   # Tests using a shared heap are inherently non-deterministic.
   'shared-memory/*': [SKIP],
@@ -1257,11 +1274,13 @@
   'd8/enable-tracing': [SKIP],
 
   # Intentionally non-deterministic using shared arraybuffers between workers.
+  'huge-typedarrays': [SKIP],
   'wasm/atomic-wait-multi-memory': [SKIP],
   'wasm/atomics-stress': [SKIP],
   'wasm/atomics64-stress': [SKIP],
   'wasm/atomics-memory64': [SKIP],
   'wasm/futex': [SKIP],
+  'wasm/grow-shared-memory': [SKIP],
   'regress/regress-1205290': [SKIP],
   'regress/regress-1212404': [SKIP],
   'regress/regress-1221035': [SKIP],
@@ -1281,9 +1300,6 @@
   # allocations.
   'regress/regress-1394663': [SKIP],
 
-  # BUG(v8:12605): flaky test.
-  'wasm/grow-shared-memory': [SKIP],
-
   # BUG(v8:13234)
   'wasm/shared-memory-worker-gc-stress': [SKIP],
   'object-literal': [SKIP],
@@ -1293,6 +1309,9 @@
 
   # https://crbug.com/v8/14228
   'asm/poppler/poppler': [SKIP],
+
+  # https://crbug.com/v8/14421
+  'wasm/multiple-code-spaces': [SKIP],
 }],  # 'verify_predictable'
 
 ##############################################################################
@@ -1643,10 +1662,12 @@
   'wasm/liftoff-simd-params': [SKIP],
   'wasm/multi-value-simd': [SKIP],
   'wasm/simd-*': [SKIP],
+  'wasm/turboshaft/array-new-unreachable': [SKIP],
   'regress/wasm/regress-9447': [SKIP],
   'regress/wasm/regress-10309': [SKIP],
   'regress/wasm/regress-10831': [SKIP],
   'regress/wasm/regress-13732': [SKIP],
+  'regress/wasm/regress-14356': [SKIP],
   'regress/wasm/regress-1054466': [SKIP],
   'regress/wasm/regress-1065599': [SKIP],
   'regress/wasm/regress-1070078': [SKIP],
@@ -1680,6 +1701,10 @@
   'regress/wasm/regress-1408337': [SKIP],
   'regress/wasm/regress-1417516': [SKIP],
   'regress/wasm/regress-1443218': [SKIP],
+  'regress/wasm/regress-1479926': [SKIP],
+  'regress/wasm/regress-1480117': [SKIP],
+  'regress/wasm/regress-1484978': [SKIP],
+  'regress/wasm/regress-1487077': [SKIP],
   'regress/wasm/regress-crbug-1338980': [SKIP],
   'regress/wasm/regress-crbug-1355070': [SKIP],
   'regress/wasm/regress-crbug-1356718': [SKIP],
@@ -1714,7 +1739,6 @@
 ##############################################################################
 ['variant == experimental_regexp', {
   'regress/regress-779407': [SKIP],
-  'regexp-14098': [FAIL],
 }],  # variant == experimental_regexp
 
 ################################################################################
@@ -1891,11 +1915,11 @@
 }],  # arch != x64 or gc_fuzzer or deopt_fuzzer or interrupt_fuzzer
 
 ##############################################################################
-['((arch != x64 and arch != arm64) or (simulator_run and conservative_stack_scanning))', {
+['((arch != x64 and arch != arm64 and arch != ia32) or (simulator_run and conservative_stack_scanning))', {
   # Stack switching is only supported on x64/arm64.
   'wasm/stack-switching': [SKIP],
   'wasm/stack-switching-export': [SKIP],
-}],  # (arch != x64 and arch != arm64)
+}],  # (arch != x64 and arch != arm64 and arch != ia32)
 
 ##############################################################################
 ['arch != x64', {

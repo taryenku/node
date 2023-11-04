@@ -1683,7 +1683,7 @@ TEST(jump_tables3) {
     values[i] = isolate->factory()->NewHeapNumber<AllocationType::kOld>(value);
   }
   Label labels[kNumCases], done, dispatch;
-  Object obj;
+  Tagged<Object> obj;
   int32_t imm32;
 
   auto fn = [&labels, &done, &dispatch, values, &obj,
@@ -1726,7 +1726,8 @@ TEST(jump_tables3) {
 
   for (int i = 0; i < kNumCases; ++i) {
     Handle<Object> result(
-        Object(reinterpret_cast<Address>(f.Call(i, 0, 0, 0, 0))), isolate);
+        Tagged<Object>(reinterpret_cast<Address>(f.Call(i, 0, 0, 0, 0))),
+        isolate);
 #ifdef OBJECT_PRINT
     ::printf("f(%d) = ", i);
     Print(*result, std::cout);
@@ -1891,7 +1892,7 @@ TEST(RVV_VFNEG_signaling_NaN) {
         width == 32 ? __ flw(ft0, a0, 0) : __ fld(ft0, a0, 0);               \
         __ vl(v1, a1, 0, VSew::E##width);                                    \
         __ instr_name(reg1, reg2);                                           \
-        __ fsd(ft0, a0, 0);                                                  \
+        width == 32 ? __ fsw(ft0, a0, 0) : __ fsd(ft0, a0, 0);               \
         __ vs(v1, a1, 0, VSew::E##width);                                    \
       };                                                                     \
       GenAndRunTest<int32_t, int32_t>((int32_t)&rs1_fval, (int32_t)res, fn); \
@@ -1912,7 +1913,7 @@ TEST(RVV_VFNEG_signaling_NaN) {
       width == 32 ? __ flw(ft0, a0, 0) : __ fld(ft0, a0, 0);                 \
       __ vl(v1, a1, 0, VSew::E##width);                                      \
       __ instr_name(reg1, reg2);                                             \
-      __ fsd(ft0, a0, 0);                                                    \
+      width == 32 ? __ fsw(ft0, a0, 0) : __ fsd(ft0, a0, 0);                 \
       __ vs(v1, a1, 0, VSew::E##width);                                      \
     };                                                                       \
     GenAndRunTest<int32_t, int32_t>((int32_t)&rs1_fval, (int32_t)res, fn);   \
@@ -2506,7 +2507,8 @@ UTEST_RVV_FMA_VF_FORM_WITH_RES(vfnmsac_vf, ARRAY_FLOAT,
       __ instr_name(v0, v2, v4);                                       \
       __ VU.set(t0, VSew::E64, Vlmul::m1);                             \
       __ li(a0, Operand(int32_t(&result)));                            \
-      __ vs(v0, a0, 0, VSew::E64);                                     \
+      __ vfmv_fs(fa0, v0);                                             \
+      __ fsd(fa0, a0, 0);                                              \
     };                                                                 \
     for (float rs1_fval : compiler::ValueHelper::GetVector<float>()) { \
       std::vector<double> temp_arr(kRvvVLEN / 32,                      \

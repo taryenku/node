@@ -16,6 +16,7 @@
 #include "v8-data.h"          // NOLINT(build/include_directory)
 #include "v8-local-handle.h"  // NOLINT(build/include_directory)
 #include "v8-maybe.h"         // NOLINT(build/include_directory)
+#include "v8-memory-span.h"   // NOLINT(build/include_directory)
 #include "v8-message.h"       // NOLINT(build/include_directory)
 #include "v8config.h"         // NOLINT(build/include_directory)
 
@@ -285,9 +286,14 @@ class V8_EXPORT Module : public Data {
    * module_name is used solely for logging/debugging and doesn't affect module
    * behavior.
    */
+  V8_DEPRECATE_SOON("Please use the version that takes a MemorySpan")
   static Local<Module> CreateSyntheticModule(
       Isolate* isolate, Local<String> module_name,
       const std::vector<Local<String>>& export_names,
+      SyntheticModuleEvaluationSteps evaluation_steps);
+  static Local<Module> CreateSyntheticModule(
+      Isolate* isolate, Local<String> module_name,
+      const MemorySpan<const Local<String>>& export_names,
       SyntheticModuleEvaluationSteps evaluation_steps);
 
   /**
@@ -307,8 +313,19 @@ class V8_EXPORT Module : public Data {
    * with the pending top-level await.
    * An embedder may call this before exiting to improve error messages.
    */
+  V8_DEPRECATE_SOON("Please use GetStalledTopLevelAwaitMessages")
   std::vector<std::tuple<Local<Module>, Local<Message>>>
   GetStalledTopLevelAwaitMessage(Isolate* isolate);
+
+  /**
+   * Search the modules requested directly or indirectly by the module for
+   * any top-level await that has not yet resolved. If there is any, the
+   * returned pair of vectors (of equal size) contain the unresolved module
+   * and corresponding message with the pending top-level await.
+   * An embedder may call this before exiting to improve error messages.
+   */
+  std::pair<LocalVector<Module>, LocalVector<Message>>
+  GetStalledTopLevelAwaitMessages(Isolate* isolate);
 
   V8_INLINE static Module* Cast(Data* data);
 

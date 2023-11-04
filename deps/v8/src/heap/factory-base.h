@@ -146,7 +146,7 @@ class FactoryBase : public TorqueGeneratedFactory<Impl> {
   Handle<FixedArray> NewFixedArrayWithHoles(
       int length, AllocationType allocation = AllocationType::kYoung);
 
-  // Allocate a new fixed array with Smi(0) entries.
+  // Allocate a new fixed array with Tagged<Smi>(0) entries.
   Handle<FixedArray> NewFixedArrayWithZeroes(
       int length, AllocationType allocation = AllocationType::kYoung);
 
@@ -184,6 +184,8 @@ class FactoryBase : public TorqueGeneratedFactory<Impl> {
                                          int frame_size, int parameter_count,
                                          Handle<FixedArray> constant_pool);
 
+  Handle<BytecodeWrapper> NewBytecodeWrapper();
+
   // Allocates a fixed array for name-value pairs of boilerplate properties and
   // calculates the number of properties we need to store in the backing store.
   Handle<ObjectBoilerplateDescription> NewObjectBoilerplateDescription(
@@ -207,6 +209,9 @@ class FactoryBase : public TorqueGeneratedFactory<Impl> {
       Handle<PrimitiveHeapObject> source, int script_id,
       ScriptEventType event_type = ScriptEventType::kCreate);
 
+  Handle<SloppyArgumentsElements> NewSloppyArgumentsElements(
+      int length, Handle<Context> context, Handle<FixedArray> arguments,
+      AllocationType allocation = AllocationType::kYoung);
   Handle<ArrayList> NewArrayList(
       int size, AllocationType allocation = AllocationType::kYoung);
 
@@ -390,6 +395,10 @@ class FactoryBase : public TorqueGeneratedFactory<Impl> {
       AllocationAlignment alignment = kTaggedAligned);
 
   friend TorqueGeneratedFactory<Impl>;
+  template <class Derived, class Shape>
+  friend class TaggedArrayBase;
+  template <class Derived, class Shape>
+  friend class PrimitiveArrayBase;
 };
 
 extern template class EXPORT_TEMPLATE_DECLARE(V8_EXPORT_PRIVATE)

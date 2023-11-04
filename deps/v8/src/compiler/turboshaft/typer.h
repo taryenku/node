@@ -140,10 +140,10 @@ struct WordOperationTyper {
     std::pair<word_t, word_t> y = MakeRange(rhs);
 
     // If the result would not be a complete range, we compute it.
-    // Check: (lhs.to + rhs.to + 1) - (lhs.from + rhs.from + 1) < max
-    // =====> (lhs.to - lhs.from) + (rhs.to - rhs.from) < max
-    // =====> (lhs.to - lhs.from) < max - (rhs.to - rhs.from)
-    if (distance(x) < max - distance(y)) {
+    // Check: (lhs.to - lhs.from + 1) + rhs.to - rhs.from < max
+    // =====> (lhs.to - lhs.from + 1) < max - rhs.to + rhs.from
+    // =====> (lhs.to - lhs.from + 1) < max - (rhs.to - rhs.from)
+    if (distance(x) + 1 < max - distance(y)) {
       return type_t::Range(x.first + y.first, x.second + y.second, zone);
     }
 
@@ -170,7 +170,13 @@ struct WordOperationTyper {
     std::pair<word_t, word_t> y = MakeRange(rhs);
 
     if (!is_wrapping(x) && !is_wrapping(y)) {
-      return type_t::Range(x.first - y.second, x.second - y.first, zone);
+      // If the result would not be a complete range, we compute it.
+      // Check: (lhs.to - lhs.from + 1) + rhs.to - rhs.from < max
+      // =====> (lhs.to - lhs.from + 1) < max - rhs.to + rhs.from
+      // =====> (lhs.to - lhs.from + 1) < max - (rhs.to - rhs.from)
+      if (distance(x) + 1 < max - distance(y)) {
+        return type_t::Range(x.first - y.second, x.second - y.first, zone);
+      }
     }
 
     // TODO(nicohartmann@): Improve the wrapping cases.
@@ -703,15 +709,17 @@ struct FloatOperationTyper {
         ((l_min == -inf || l_max == inf) && (r_min == -inf || r_max == inf));
 
     // Try to rule out -0.
-    // -0 / r (r > 0)
     bool maybe_minuszero =
+        // -0 / r (r > 0)
         (l.has_minus_zero() && r_max > 0)
-        // 0 / r (r < 0 || r == -0)
-        || (l.Contains(0) && (r_min < 0 || r.has_minus_zero()))
-        // l / inf (l < 0 || l == -0)
-        || (r_max == inf && (l_min < 0 || l.has_minus_zero()))
-        // l / -inf (l >= 0)
-        || (r_min == -inf && l_max >= 0);
+        // -0.0..01 / r (r > 1)
+        || (l.Contains(0) && l_min < 0 && r_min > 1)
+        // 0.0..01 / r (r < -1)
+        || (l.Contains(0) && l_max >= 0 && r_min < -1)
+        // l / large (l < 0)
+        || (l_max < 0 && detail::is_minus_zero(l_max / r_max))
+        // l / -large (l > 0)
+        || (l_min > 0 && detail::is_minus_zero(l_min / r_min));
 
     uint32_t special_values = (maybe_nan ? type_t::kNaN : 0) |
                               (maybe_minuszero ? type_t::kMinusZero : 0);

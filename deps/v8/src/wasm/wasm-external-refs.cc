@@ -344,30 +344,20 @@ uint32_t word64_popcnt_wrapper(Address data) {
   return base::bits::CountPopulation(ReadUnalignedValue<uint64_t>(data));
 }
 
-uint32_t word32_rol_wrapper(Address data) {
-  uint32_t input = ReadUnalignedValue<uint32_t>(data);
-  uint32_t shift = ReadUnalignedValue<uint32_t>(data + sizeof(input)) & 31;
-  return (input << shift) | (input >> ((32 - shift) & 31));
+uint32_t word32_rol_wrapper(uint32_t input, uint32_t shift) {
+  return (input << (shift & 31)) | (input >> ((32 - shift) & 31));
 }
 
-uint32_t word32_ror_wrapper(Address data) {
-  uint32_t input = ReadUnalignedValue<uint32_t>(data);
-  uint32_t shift = ReadUnalignedValue<uint32_t>(data + sizeof(input)) & 31;
-  return (input >> shift) | (input << ((32 - shift) & 31));
+uint32_t word32_ror_wrapper(uint32_t input, uint32_t shift) {
+  return (input >> (shift & 31)) | (input << ((32 - shift) & 31));
 }
 
-void word64_rol_wrapper(Address data) {
-  uint64_t input = ReadUnalignedValue<uint64_t>(data);
-  uint64_t shift = ReadUnalignedValue<uint64_t>(data + sizeof(input)) & 63;
-  uint64_t result = (input << shift) | (input >> ((64 - shift) & 63));
-  WriteUnalignedValue<uint64_t>(data, result);
+uint64_t word64_rol_wrapper(uint64_t input, uint32_t shift) {
+  return (input << (shift & 63)) | (input >> ((64 - shift) & 63));
 }
 
-void word64_ror_wrapper(Address data) {
-  uint64_t input = ReadUnalignedValue<uint64_t>(data);
-  uint64_t shift = ReadUnalignedValue<uint64_t>(data + sizeof(input)) & 63;
-  uint64_t result = (input >> shift) | (input << ((64 - shift) & 63));
-  WriteUnalignedValue<uint64_t>(data, result);
+uint64_t word64_ror_wrapper(uint64_t input, uint32_t shift) {
+  return (input >> (shift & 63)) | (input << ((64 - shift) & 63));
 }
 
 void float64_pow_wrapper(Address data) {
@@ -457,7 +447,7 @@ class V8_NODISCARD ThreadNotInWasmScope {
 #endif
 };
 
-inline uint8_t* EffectiveAddress(WasmInstanceObject instance,
+inline uint8_t* EffectiveAddress(Tagged<WasmInstanceObject> instance,
                                  uint32_t mem_index, uintptr_t index) {
   return instance->memory_base(mem_index) + index;
 }
@@ -477,8 +467,8 @@ int32_t memory_init_wrapper(Address data) {
   ThreadNotInWasmScope thread_not_in_wasm_scope;
   DisallowGarbageCollection no_gc;
   size_t offset = 0;
-  WasmInstanceObject instance =
-      WasmInstanceObject::cast(ReadAndIncrementOffset<Object>(data, &offset));
+  Tagged<WasmInstanceObject> instance = WasmInstanceObject::cast(
+      ReadAndIncrementOffset<Tagged<Object>>(data, &offset));
   uint32_t mem_index = ReadAndIncrementOffset<uint32_t>(data, &offset);
   uintptr_t dst = ReadAndIncrementOffset<uintptr_t>(data, &offset);
   uint32_t src = ReadAndIncrementOffset<uint32_t>(data, &offset);
@@ -502,8 +492,8 @@ int32_t memory_copy_wrapper(Address data) {
   ThreadNotInWasmScope thread_not_in_wasm_scope;
   DisallowGarbageCollection no_gc;
   size_t offset = 0;
-  WasmInstanceObject instance =
-      WasmInstanceObject::cast(ReadAndIncrementOffset<Object>(data, &offset));
+  Tagged<WasmInstanceObject> instance = WasmInstanceObject::cast(
+      ReadAndIncrementOffset<Tagged<Object>>(data, &offset));
   uint32_t dst_mem_index = ReadAndIncrementOffset<uint32_t>(data, &offset);
   uint32_t src_mem_index = ReadAndIncrementOffset<uint32_t>(data, &offset);
   uintptr_t dst = ReadAndIncrementOffset<uintptr_t>(data, &offset);
@@ -526,8 +516,8 @@ int32_t memory_fill_wrapper(Address data) {
   DisallowGarbageCollection no_gc;
 
   size_t offset = 0;
-  WasmInstanceObject instance =
-      WasmInstanceObject::cast(ReadAndIncrementOffset<Object>(data, &offset));
+  Tagged<WasmInstanceObject> instance = WasmInstanceObject::cast(
+      ReadAndIncrementOffset<Tagged<Object>>(data, &offset));
   uint32_t mem_index = ReadAndIncrementOffset<uint32_t>(data, &offset);
   uintptr_t dst = ReadAndIncrementOffset<uintptr_t>(data, &offset);
   uint8_t value =
@@ -547,7 +537,7 @@ inline void* ArrayElementAddress(Address array, uint32_t index,
   return reinterpret_cast<void*>(array + WasmArray::kHeaderSize -
                                  kHeapObjectTag + index * element_size_bytes);
 }
-inline void* ArrayElementAddress(WasmArray array, uint32_t index,
+inline void* ArrayElementAddress(Tagged<WasmArray> array, uint32_t index,
                                  int element_size_bytes) {
   return ArrayElementAddress(array.ptr(), index, element_size_bytes);
 }
@@ -559,8 +549,8 @@ void array_copy_wrapper(Address raw_instance, Address raw_dst_array,
   DCHECK_GT(length, 0);
   ThreadNotInWasmScope thread_not_in_wasm_scope;
   DisallowGarbageCollection no_gc;
-  WasmArray dst_array = WasmArray::cast(Object(raw_dst_array));
-  WasmArray src_array = WasmArray::cast(Object(raw_src_array));
+  Tagged<WasmArray> dst_array = WasmArray::cast(Tagged<Object>(raw_dst_array));
+  Tagged<WasmArray> src_array = WasmArray::cast(Tagged<Object>(raw_src_array));
 
   bool overlapping_ranges =
       dst_array.ptr() == src_array.ptr() &&
@@ -568,8 +558,8 @@ void array_copy_wrapper(Address raw_instance, Address raw_dst_array,
                              : src_index + length > dst_index);
   wasm::ValueType element_type = src_array->type()->element_type();
   if (element_type.is_reference()) {
-    WasmInstanceObject instance =
-        WasmInstanceObject::cast(Object(raw_instance));
+    Tagged<WasmInstanceObject> instance =
+        WasmInstanceObject::cast(Tagged<Object>(raw_instance));
     Isolate* isolate = instance->GetIsolate();
     ObjectSlot dst_slot = dst_array->ElementSlot(dst_index);
     ObjectSlot src_slot = src_array->ElementSlot(src_index);
@@ -601,7 +591,8 @@ void array_fill_wrapper(Address raw_array, uint32_t index, uint32_t length,
   ValueType type = ValueType::FromRawBitField(raw_type);
   int8_t* initial_element_address = reinterpret_cast<int8_t*>(
       ArrayElementAddress(raw_array, index, type.value_kind_size()));
-  int64_t initial_value = *reinterpret_cast<int64_t*>(initial_value_addr);
+  // Stack pointers are only aligned to 4 bytes.
+  int64_t initial_value = base::ReadUnalignedValue<int64_t>(initial_value_addr);
   const int bytes_to_set = length * type.value_kind_size();
 
   // If the initial value is zero, we memset the array.
@@ -618,7 +609,10 @@ void array_fill_wrapper(Address raw_array, uint32_t index, uint32_t length,
   switch (type.kind()) {
     case kI64:
     case kF64: {
-      *reinterpret_cast<int64_t*>(initial_element_address) = initial_value;
+      // Array elements are only aligned to 4 bytes, therefore
+      // `initial_element_address` may be misaligned as a 64-bit pointer.
+      base::WriteUnalignedValue<int64_t>(
+          reinterpret_cast<Address>(initial_element_address), initial_value);
       break;
     }
     case kI32:
@@ -646,7 +640,9 @@ void array_fill_wrapper(Address raw_array, uint32_t index, uint32_t length,
         int32_t* base = reinterpret_cast<int32_t*>(initial_element_address);
         base[0] = base[1] = static_cast<int32_t>(initial_value);
       } else {
-        *reinterpret_cast<int64_t*>(initial_element_address) = initial_value;
+        // We use WriteUnalignedValue; see above.
+        base::WriteUnalignedValue(
+            reinterpret_cast<Address>(initial_element_address), initial_value);
       }
       break;
     case kS128:
@@ -671,7 +667,7 @@ void array_fill_wrapper(Address raw_array, uint32_t index, uint32_t length,
 
   if (emit_write_barrier) {
     DCHECK(type.is_reference());
-    WasmArray array = WasmArray::cast(Object(raw_array));
+    Tagged<WasmArray> array = WasmArray::cast(Tagged<Object>(raw_array));
     Isolate* isolate = array->GetIsolate();
     ObjectSlot start(reinterpret_cast<Address>(initial_element_address));
     ObjectSlot end(
@@ -681,7 +677,7 @@ void array_fill_wrapper(Address raw_array, uint32_t index, uint32_t length,
 }
 
 double flat_string_to_f64(Address string_address) {
-  String s = String::cast(Object(string_address));
+  Tagged<String> s = String::cast(Tagged<Object>(string_address));
   return FlatStringToDouble(s, ALLOW_TRAILING_JUNK,
                             std::numeric_limits<double>::quiet_NaN());
 }

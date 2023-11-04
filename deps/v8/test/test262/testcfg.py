@@ -25,17 +25,13 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import imp
-import itertools
-import os
-import re
+import importlib.machinery
 import sys
 
 from pathlib import Path
 
 from testrunner.local import statusfile
 from testrunner.local import testsuite
-from testrunner.local import utils
 from testrunner.objects import testcase
 from testrunner.outproc import base as outproc
 from testrunner.outproc import test262
@@ -65,6 +61,8 @@ FEATURE_FLAGS = {
     'json-parse-with-source': '--harmony-json-parse-with-source',
     'iterator-helpers': '--harmony-iterator-helpers',
     'set-methods': '--harmony-set-methods',
+    'promise-with-resolvers': '--js-promise-withresolvers',
+    'Array.fromAsync': '--harmony-array-from-async',
 }
 
 SKIPPED_FEATURES = set([])
@@ -144,11 +142,12 @@ class TestSuite(testsuite.TestSuite):
     root = TEST_262_TOOLS_ABS_PATH
     f = None
     try:
-      (f, pathname, description) = imp.find_module("parseTestRecord", [root])
-      module = imp.load_module("parseTestRecord", f, pathname, description)
+      loader = importlib.machinery.SourceFileLoader(
+          "parseTestRecord", f"{root}/parseTestRecord.py")
+      module = loader.load_module()
       return module.parseTestRecord
-    except:
-      print('Cannot load parseTestRecord')
+    except Exception as e:
+      print(f'Cannot load parseTestRecord: {e}')
       raise
     finally:
       if f:

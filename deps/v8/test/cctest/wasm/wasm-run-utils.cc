@@ -14,6 +14,7 @@
 #include "src/wasm/graph-builder-interface.h"
 #include "src/wasm/leb-helper.h"
 #include "src/wasm/module-compiler.h"
+#include "src/wasm/module-instantiate.h"
 #include "src/wasm/wasm-engine.h"
 #include "src/wasm/wasm-import-wrapper-cache.h"
 #include "src/wasm/wasm-objects-inl.h"
@@ -208,6 +209,15 @@ uint32_t TestingModuleBuilder::AddFunction(const FunctionSig* sig,
 void TestingModuleBuilder::InitializeWrapperCache() {
   isolate_->heap()->EnsureWasmCanonicalRttsSize(
       test_module_->MaxCanonicalTypeIndex() + 1);
+  if (enabled_features_.has_gc()) {
+    Handle<FixedArray> maps = isolate_->factory()->NewFixedArray(
+        static_cast<int>(test_module_->types.size()));
+    for (uint32_t index = 0; index < test_module_->types.size(); index++) {
+      CreateMapForType(isolate_, test_module_.get(), index, instance_object(),
+                       maps);
+    }
+    instance_object()->set_managed_object_maps(*maps);
+  }
 }
 
 Handle<JSFunction> TestingModuleBuilder::WrapCode(uint32_t index) {
@@ -346,15 +356,13 @@ uint32_t TestingModuleBuilder::AddPassiveDataSegment(
   uint32_t size = static_cast<uint32_t>(data_segment_sizes_.size());
   Handle<FixedAddressArray> data_segment_starts =
       FixedAddressArray::New(isolate_, size);
-  data_segment_starts->copy_in(
-      0, reinterpret_cast<uint8_t*>(data_segment_starts_.data()),
-      size * sizeof(Address));
+  MemCopy(data_segment_starts->begin(), data_segment_starts_.data(),
+          size * sizeof(Address));
   instance_object_->set_data_segment_starts(*data_segment_starts);
   Handle<FixedUInt32Array> data_segment_sizes =
       FixedUInt32Array::New(isolate_, size);
-  data_segment_sizes->copy_in(
-      0, reinterpret_cast<uint8_t*>(data_segment_sizes_.data()),
-      size * sizeof(uint32_t));
+  MemCopy(data_segment_sizes->begin(), data_segment_sizes_.data(),
+          size * sizeof(uint32_t));
   instance_object_->set_data_segment_sizes(*data_segment_sizes);
   return index;
 }
@@ -472,8 +480,9 @@ void WasmFunctionCompiler::Build(base::Vector<const uint8_t> bytes) {
   WasmFeatures unused_detected_features;
   // Validate Wasm modules; asm.js is assumed to be always valid.
   if (env.module->origin == kWasmOrigin) {
-    DecodeResult validation_result = ValidateFunctionBody(
-        env.enabled_features, env.module, &unused_detected_features, func_body);
+    DecodeResult validation_result =
+        ValidateFunctionBody(zone_, env.enabled_features, env.module,
+                             &unused_detected_features, func_body);
     if (validation_result.failed()) {
       FATAL("Validation failed: %s",
             validation_result.error().message().c_str());

@@ -243,10 +243,6 @@ type BuiltinPtr extends Smi generates 'TNode<BuiltinPtr>';
 type Number = Smi|HeapNumber;
 type Numeric = Number|BigInt;
 
-extern class ObjectBoilerplateDescription extends FixedArray;
-extern class ClosureFeedbackCellArray extends FixedArray;
-extern class ScriptContextTable extends FixedArray;
-
 extern class TransitionArray extends WeakFixedArray;
 
 extern operator '.length_intptr' macro LoadAndUntagWeakFixedArrayLength(
@@ -470,6 +466,8 @@ extern enum MessageTemplate {
   kArgumentIsNonObject,
   kKeysMethodInvalid,
   kGeneratorRunning,
+  kFirstArgumentAsyncIteratorSymbolNonCallable,
+  kIteratorResultNotAnObject,
   ...
 }
 
@@ -485,8 +483,6 @@ extern enum PropertyAttributes extends int31 {
 
 const kArrayBufferMaxByteLength:
     constexpr uintptr generates 'JSArrayBuffer::kMaxByteLength';
-const kTypedArrayMaxLength:
-    constexpr uintptr generates 'JSTypedArray::kMaxLength';
 const kMaxTypedArrayInHeap:
     constexpr int31 generates 'JSTypedArray::kMaxSizeInHeap';
 // CSA does not support 64-bit types on 32-bit platforms so as a workaround the
@@ -536,6 +532,7 @@ const kHeapObjectHeaderSize:
     constexpr int32 generates 'HeapObject::kHeaderSize';
 
 type TheHole extends Hole;
+type PromiseHole extends Hole;
 type Exception extends Oddball;
 type EmptyString extends String;
 
@@ -551,6 +548,7 @@ extern macro Int32FalseConstant(): bool;
 extern macro Int32TrueConstant(): bool;
 extern macro IteratorSymbolConstant(): PublicSymbol;
 extern macro KeysStringConstant(): String;
+extern macro AsyncIteratorSymbolConstant(): PublicSymbol;
 extern macro LengthStringConstant(): String;
 extern macro MatchSymbolConstant(): Symbol;
 extern macro MessageStringConstant(): String;
@@ -564,6 +562,7 @@ extern macro SearchSymbolConstant(): Symbol;
 extern macro SizeStringConstant(): String;
 extern macro StringStringConstant(): String;
 extern macro TheHoleConstant(): TheHole;
+extern macro PromiseHoleConstant(): PromiseHole;
 extern macro ToPrimitiveSymbolConstant(): PublicSymbol;
 extern macro ToStringStringConstant(): String;
 extern macro TrueConstant(): True;
@@ -572,6 +571,7 @@ extern macro ValueOfStringConstant(): String;
 extern macro WasmWrappedObjectSymbolConstant(): Symbol;
 
 const TheHole: TheHole = TheHoleConstant();
+const PromiseHole: PromiseHole = PromiseHoleConstant();
 const Null: Null = NullConstant();
 const Undefined: Undefined = UndefinedConstant();
 const True: True = TrueConstant();

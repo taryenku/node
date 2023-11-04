@@ -1889,7 +1889,7 @@ void RiscvDebugger::Debug() {
           sreg_t value;
           StdoutStream os;
           if (GetValue(arg1, &value)) {
-            Object obj(value);
+            Tagged<Object> obj(value);
             os << arg1 << ": \n";
 #ifdef DEBUG
             Print(obj, os);
@@ -1938,7 +1938,7 @@ void RiscvDebugger::Debug() {
           PrintF("  0x%012" PRIxPTR " :  0x%016" REGIx_FORMAT
                  "  %14" REGId_FORMAT " ",
                  reinterpret_cast<intptr_t>(cur), *cur, *cur);
-          Object obj(*cur);
+          Tagged<Object> obj(*cur);
           Heap* current_heap = sim_->isolate_->heap();
           if (IsSmi(obj) ||
               IsValidHeapObject(current_heap, HeapObject::cast(obj))) {
@@ -2540,9 +2540,12 @@ float Simulator::get_fpu_register_float(int fpureg) const {
   return *base::bit_cast<float*>(const_cast<int64_t*>(&FPUregisters_[fpureg]));
 }
 
-Float32 Simulator::get_fpu_register_Float32(int fpureg) const {
+// Fix NaN boxing error according to
+// https://github.com/riscv/riscv-isa-manual/blob/main/src/d-st-ext.adoc#nan-boxing-of-narrower-values"
+Float32 Simulator::get_fpu_register_Float32(int fpureg,
+                                            bool check_nanbox) const {
   DCHECK((fpureg >= 0) && (fpureg < kNumFPURegisters));
-  if (!is_boxed_float(FPUregisters_[fpureg])) {
+  if (check_nanbox && !is_boxed_float(FPUregisters_[fpureg])) {
     std::cout << std::hex << FPUregisters_[fpureg] << std::endl;
     return Float32::FromBits(0x7fc00000);
   }
@@ -4815,7 +4818,7 @@ bool Simulator::DecodeRvvVS() {
 Builtin Simulator::LookUp(Address pc) {
   for (Builtin builtin = Builtins::kFirst; builtin <= Builtins::kLast;
        ++builtin) {
-    if (builtins_.code(builtin).contains(isolate_, pc)) return builtin;
+    if (builtins_.code(builtin)->contains(isolate_, pc)) return builtin;
   }
   return Builtin::kNoBuiltinId;
 }
@@ -4832,7 +4835,7 @@ void Simulator::DecodeRVIType() {
         if (builtin != Builtin::kNoBuiltinId) {
           auto code = builtins_.code(builtin);
           if ((rs1_reg() != ra || imm12() != 0)) {
-            if ((Address)get_pc() == code.instruction_start()) {
+            if ((Address)get_pc() == code->instruction_start()) {
               sreg_t arg0 = get_register(a0);
               sreg_t arg1 = get_register(a1);
               sreg_t arg2 = get_register(a2);
@@ -5082,7 +5085,8 @@ void Simulator::DecodeRVSType() {
 #endif /*V8_TARGET_ARCH_RISCV64*/
     // TODO(riscv): use F Extension macro block
     case RO_FSW: {
-      WriteMem<Float32>(rs1() + s_imm12(), get_fpu_register_Float32(rs2_reg()),
+      WriteMem<Float32>(rs1() + s_imm12(),
+                        get_fpu_register_Float32(rs2_reg(), false),
                         instr_.instr());
       break;
     }
@@ -5328,7 +5332,7 @@ void Simulator::DecodeCSSType() {
 #if V8_TARGET_ARCH_RISCV32
     case RO_C_FSWSP: {
       sreg_t addr = get_register(sp) + rvc_imm6_sdsp();
-      WriteMem<Float32>(addr, get_fpu_register_Float32(rvc_rs2_reg()),
+      WriteMem<Float32>(addr, get_fpu_register_Float32(rvc_rs2_reg(), false),
                         instr_.instr());
       break;
     }

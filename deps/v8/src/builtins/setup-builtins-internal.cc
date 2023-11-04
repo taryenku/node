@@ -126,7 +126,8 @@ Tagged<Code> BuildWithMacroAssembler(Isolate* isolate, Builtin builtin,
     HandlerTable::EmitReturnEntry(
         &masm, 0, isolate->builtins()->js_entry_handler_offset());
   }
-#if V8_ENABLE_WEBASSEMBLY && (V8_TARGET_ARCH_X64 || V8_TARGET_ARCH_ARM64)
+#if V8_ENABLE_WEBASSEMBLY && \
+    (V8_TARGET_ARCH_X64 || V8_TARGET_ARCH_ARM64 || V8_TARGET_ARCH_IA32)
   // TODO(v8:12191): Enable on all platforms once the builtin has been ported.
   if (builtin == Builtin::kWasmReturnPromiseOnSuspendAsm) {
     handler_table_offset = HandlerTable::EmitReturnTableStart(&masm);
@@ -242,10 +243,14 @@ void SetupIsolateDelegate::ReplacePlaceholders(Isolate* isolate) {
        ++builtin) {
     Tagged<Code> code = builtins->code(builtin);
     Tagged<InstructionStream> istream = code->instruction_stream();
-    CodePageMemoryModificationScope code_modification_scope(istream);
+    WritableJitAllocation jit_allocation = ThreadIsolation::LookupJitAllocation(
+        istream.address(), istream->Size(),
+        ThreadIsolation::JitAllocationType::kInstructionStream);
     bool flush_icache = false;
-    for (RelocIterator it(code, kRelocMask); !it.done(); it.next()) {
-      RelocInfo* rinfo = it.rinfo();
+    for (WritableRelocIterator it(jit_allocation, istream,
+                                  code->constant_pool(), kRelocMask);
+         !it.done(); it.next()) {
+      WritableRelocInfo* rinfo = it.rinfo();
       if (RelocInfo::IsCodeTargetMode(rinfo->rmode())) {
         Tagged<Code> target_code =
             Code::FromTargetAddress(rinfo->target_address());

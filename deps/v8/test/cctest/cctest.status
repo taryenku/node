@@ -97,12 +97,11 @@
   'test-code-stub-assembler/PopAndReturnFromTFCBuiltinWithStackParameters' : [FAIL, ['official_build', CRASH]],
 
   # Slow tests.
+  'test-api/FastApiCalls': [PASS, SLOW],
   'test-api/InternalFieldsSubclassing': [PASS, SLOW],
   'test-debug/CallFunctionInDebugger': [PASS, ['mode == debug', SLOW]],
   'test-heap/TestInternalWeakLists': [PASS, SLOW],
   'test-heap-profiler/ManyLocalsInSharedContext': [PASS, SLOW],
-  'test-jump-table-assembler/JumpTablePatchingStress': [PASS, SLOW],
-  'test-ptr-compr-cage/SharedPtrComprCageRace': [PASS, SLOW],
   'test-serialize/CustomSnapshotDataBlobImmortalImmovableRoots': [PASS, ['mode == debug', SKIP]],
   'test-serialize/SharedStrings': [PASS, SLOW],
   'test-serialize/StartupSerializerOnce': [PASS, SLOW],
@@ -110,25 +109,24 @@
   'test-strings/StringOOM*': [PASS, ['mode == debug', SKIP]],
 
   # Tests that need to run sequentially (e.g. due to memory consumption).
-  'test-accessors/HandleScopePop': [PASS, HEAVY],
-  'test-api/FastApiCalls': [PASS, HEAVY],
+  'test-allocation/AccountingAllocatorOOM': [PASS, HEAVY],
+  'test-allocation/MallocedOperatorNewOOM': [PASS, HEAVY],
   'test-api/NewStringRangeError': [PASS, HEAVY],
-  'test-api/Threading8': [PASS, HEAVY],
+  'test-jump-table-assembler/JumpTablePatchingStress': [PASS, HEAVY],
+  'test-lockers/LockerUnlocker': [PASS, HEAVY],
   'test-lockers/LockTwiceAndUnlock': [PASS, HEAVY],
-  'test-run-machops/RunInt32AddWithOverflowImm': [PASS, HEAVY],
-  'test-run-machops/RunInt32MulAndInt32AddP': [PASS, HEAVY],
-  'test-run-machops/RunInt64SubWithOverflowImm': [PASS, HEAVY],
+  'test-lockers/SeparateIsolatesLocksNonexclusive': [PASS, HEAVY],
+  'test-ptr-compr-cage/SharedPtrComprCageRace': [PASS, HEAVY],
   'test-serialize/ContextSerializerContext': [PASS, HEAVY],
   'test-serialize/ContextSerializerCustomContext': [PASS, HEAVY],
   'test-serialize/SnapshotCompression': [PASS, HEAVY],
   'test-serialize/StartupSerializerOnceRunScript': [PASS, HEAVY],
   'test-serialize/StartupSerializerTwiceRunScript': [PASS, HEAVY],
   'test-serialize/StaticRootsPredictableSnapshot': [PASS, HEAVY],
+  'test-spaces/OldLargeObjectSpace': [PASS, HEAVY],
+  'test-spaces/OldSpace': [PASS, HEAVY],
   'test-strings/StringOOMNewStringFromOneByte': [PASS, HEAVY],
   'test-strings/StringOOMNewStringFromUtf8': [PASS, HEAVY],
-  'test-strings/Traverse': [PASS, HEAVY],
-  'test-swiss-name-dictionary-csa/DeleteAtBoundaries': [PASS, HEAVY],
-  'test-swiss-name-dictionary-csa/SameH2': [PASS, HEAVY],
 }],  # ALWAYS
 
 ##############################################################################
@@ -256,6 +254,12 @@
   # Too slow for tsan in debug mode:
   'test-serialize/StaticRootsPredictableSnapshot': [PASS, ['mode == debug', SKIP]],
 }],  # 'tsan == True'
+
+##############################################################################
+['ubsan', {
+  # https://crbug.com/v8/14309
+  'test-run-wasm-simd/RunWasm*': [SKIP],
+}],  # 'ubsan'
 
 ##############################################################################
 ['full_debug', {
@@ -1050,8 +1054,8 @@
   # and these tests don't make sense.
   # TODO(14108): Remove once we remove '--no-liftoff' from the 'turboshaft'
   # variant.
-  'test-streaming-compilation/AsyncTestIncrementalCaching': [FAIL],
-  'test-streaming-compilation/SingleThreadedTestIncrementalCaching': [FAIL],
+  'test-streaming-compilation/AsyncTestIncrementalCaching': [SKIP],
+  'test-streaming-compilation/SingleThreadedTestIncrementalCaching': [SKIP],
 
   # Revectorization is not supported yet in Turboshaft.
   # TODO(14108): Remove once supported.
@@ -1117,12 +1121,14 @@
   'test-run-wasm-simd/RunWasmTurbofan_S256Load16Splat': [FAIL],
   'test-run-wasm-simd/RunWasmTurbofan_S256Load32Splat': [FAIL],
   'test-run-wasm-simd/RunWasmTurbofan_S256Load64Splat': [FAIL],
+  'test-run-wasm-simd/RunWasmTurbofan_ShuffleVpshufd': [FAIL],
   'test-run-wasm-simd/S128Load8x8S': [FAIL],
   'test-run-wasm-simd/S128Load8x8U': [FAIL],
   'test-run-wasm-simd/S128Load16x4S': [FAIL],
   'test-run-wasm-simd/S128Load16x4U': [FAIL],
   'test-run-wasm-simd/S128Load32x2S': [FAIL],
   'test-run-wasm-simd/S128Load32x2U': [FAIL],
+  'test-run-wasm-simd/RunWasmTurbofan_ExtractF128': [FAIL],
 }],  # variant == turboshaft
 
 ##############################################################################
